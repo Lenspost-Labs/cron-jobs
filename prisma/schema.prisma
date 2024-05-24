@@ -1,0 +1,312 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model assets {
+  id         Int      @id @default(autoincrement())
+  tags       String[] @db.VarChar(255)
+  type       String?  @db.VarChar(255)
+  author     String?  @db.VarChar(255)
+  image      String?  @db.VarChar(255)
+  createdAt  DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt  DateTime @db.Timestamptz(6)
+  dimensions Int[]
+  campaign   String?  @db.VarChar(255)
+  featured   Boolean? @default(false)
+  wallet     String?  @db.VarChar(255)
+}
+
+model canvases {
+  id                         Int                       @id @default(autoincrement())
+  data                       Json
+  params                     Json?
+  isPublic                   Boolean                   @default(false)
+  ipfsLink                   String[]                  @default(dbgenerated("(ARRAY[]::character varying[])::character varying(255)[]")) @db.VarChar(255)
+  imageLink                  String[]                  @default(dbgenerated("(ARRAY[]::character varying[])::character varying(255)[]")) @db.VarChar(255)
+  createdAt                  DateTime                  @default(now()) @db.Timestamptz(6)
+  updatedAt                  DateTime                  @db.Timestamptz(6)
+  ownerAddress               String?                   @db.VarChar(255)
+  referredFrom               String[]                  @default(dbgenerated("(ARRAY[]::character varying[])::character varying(255)[]")) @db.VarChar(255)
+  isGated                    Boolean?                  @default(false)
+  allowList                  String[]                  @default(dbgenerated("(ARRAY[]::character varying[])::character varying(255)[]")) @db.VarChar(255)
+  gatedWith                  String[]                  @default(dbgenerated("(ARRAY[]::character varying[])::character varying(255)[]")) @db.VarChar(255)
+  assetsRecipientElementData Json[]                    @default([])
+  ownerId                    Int
+  tags                       String[]                  @default(dbgenerated("(ARRAY[]::character varying[])::character varying(255)[]")) @db.VarChar(255)
+  owners                     owners                    @relation(fields: [ownerId], references: [id])
+  shared_canvas              shared_canvas[]
+  shared_mint_canvas         shared_mint_canvas[]
+  user_published_canvases    user_published_canvases[]
+}
+
+model collections {
+  id          Int        @id @default(autoincrement())
+  address     String     @db.VarChar(255)
+  name        String     @db.VarChar(255)
+  openseaLink String     @db.VarChar(255)
+  image       String     @db.VarChar(255)
+  createdAt   DateTime   @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime   @db.Timestamptz(6)
+  contents    contents[]
+}
+
+model contents {
+  id           Int          @id @default(autoincrement())
+  tokenId      String       @db.VarChar(255)
+  title        String       @db.VarChar(255)
+  description  String       @db.VarChar(255)
+  edition      String?      @db.VarChar(255)
+  ipfsLink     String       @db.VarChar(255)
+  imageURL     String       @db.VarChar(255)
+  openseaLink  String       @db.VarChar(255)
+  createdAt    DateTime     @default(now()) @db.Timestamptz(6)
+  updatedAt    DateTime     @db.Timestamptz(6)
+  collectionId Int?
+  collections  collections? @relation(fields: [collectionId], references: [id])
+}
+
+model contractRegistry {
+  id       Int    @id @default(autoincrement())
+  contract String
+  network  String
+  type     String
+}
+
+model frames {
+  id               Int      @id @default(autoincrement())
+  imageUrl         String   @db.VarChar(255)
+  tokenUri         String   @db.VarChar(255)
+  isLike           Boolean  @default(false)
+  isRecast         Boolean  @default(false)
+  isFollow         Boolean  @default(false)
+  createdAt        DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt        DateTime @db.Timestamptz(6)
+  minters          Json[]   @default([])
+  allowedMints     Int      @default(0)
+  isTopUp          Boolean  @default(false)
+  owner            String   @db.VarChar(255)
+  redirectLink     String?  @db.VarChar(255)
+  chainId          Int
+  contract_address String   @db.VarChar(255)
+  creatorSponsored Boolean  @default(false)
+  contract_type    String   @default("ERC721") @db.VarChar(255)
+  gatedChannels    String?
+  gatedCollections String?
+  owners           owners   @relation(fields: [owner], references: [evm_address])
+}
+
+model nftData {
+  id           Int      @id @default(autoincrement())
+  tokenId      String   @db.VarChar(255)
+  title        String   @db.VarChar(255)
+  description  String
+  openseaLink  String   @db.VarChar(510)
+  imageURL     String?  @db.VarChar(510)
+  permaLink    String?  @db.VarChar(510)
+  isPublic     Boolean  @default(false)
+  address      String   @db.VarChar(255)
+  createdAt    DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt    DateTime @db.Timestamptz(6)
+  ownerAddress String?  @db.VarChar(255)
+  dimensions   Int[]
+  creators     Json[]   @default([])
+  ownerId      Int
+  chainId      Int?
+  owners       owners   @relation(fields: [ownerId], references: [id])
+}
+
+model owners {
+  mail                    String?                   @db.VarChar(255)
+  lens_auth_token         Json?
+  twitter_auth_token      Json?
+  lens_handle             String?                   @db.VarChar(255)
+  followNftAddress        String?                   @db.VarChar(255)
+  profileId               String?                   @db.VarChar(255)
+  createdAt               DateTime                  @default(now()) @db.Timestamptz(6)
+  updatedAt               DateTime                  @db.Timestamptz(6)
+  solana_address          String?                   @unique @db.VarChar(255)
+  evm_address             String?                   @unique @db.VarChar(255)
+  id                      Int                       @id @default(autoincrement())
+  username                String?                   @unique @db.VarChar(255)
+  points                  Int                       @default(10)
+  farcaster_signer_uuid   String?                   @db.VarChar(255)
+  farcaster_id            String?                   @db.VarChar(255)
+  canvases                canvases[]
+  frames                  frames[]
+  nftData                 nftData[]
+  points_history          points_history[]
+  referral                referral[]
+  room                    room[]
+  room_participants       room_participants[]
+  socials                 socials[]
+  split_contracts         split_contracts[]
+  uploadeds               uploadeds[]
+  user_funds              user_funds?
+  user_published_canvases user_published_canvases[]
+}
+
+model points_history {
+  id        Int      @id @default(autoincrement())
+  ownerId   Int
+  amount    Int      @default(0)
+  taskId    Int?
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @db.Timestamptz(6)
+  reason    String?  @db.VarChar(255)
+  owners    owners   @relation(fields: [ownerId], references: [id])
+  tasks     tasks?   @relation(fields: [taskId], references: [id])
+}
+
+model referral {
+  id           Int      @id @default(autoincrement())
+  ownerId      Int
+  referralCode String   @unique
+  referred     String?  @db.VarChar(255)
+  hasClaimed   Boolean  @default(false)
+  createdAt    DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt    DateTime @db.Timestamptz(6)
+  owners       owners   @relation(fields: [ownerId], references: [id])
+}
+
+model room {
+  id                Int                 @id @default(autoincrement())
+  name              String              @db.VarChar(255)
+  createdAt         DateTime            @default(now()) @db.Timestamptz(6)
+  updatedAt         DateTime            @db.Timestamptz(6)
+  hostId            Int?
+  owners            owners?             @relation(fields: [hostId], references: [id])
+  room_participants room_participants[]
+}
+
+model room_participants {
+  id            Int     @id @default(autoincrement())
+  roomId        Int?
+  participantId Int?
+  owners        owners? @relation(fields: [participantId], references: [id])
+  room          room?   @relation(fields: [roomId], references: [id])
+}
+
+model shared_canvas {
+  id        Int      @id @default(autoincrement())
+  slug      String   @unique
+  canvasId  Int
+  isPublic  Boolean  @default(true)
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  canvases  canvases @relation(fields: [canvasId], references: [id], onDelete: Cascade)
+}
+
+model shared_mint_canvas {
+  id           Int      @id @default(autoincrement())
+  slug         String   @unique
+  canvasId     Int
+  contract     String   @db.VarChar(255)
+  createdAt    DateTime @default(now()) @db.Timestamptz(6)
+  hash         String   @db.VarChar(255)
+  chainId      Int
+  contractType String   @db.VarChar(255)
+  canvases     canvases @relation(fields: [canvasId], references: [id], onDelete: Cascade)
+}
+
+model socials {
+  id               Int      @id @default(autoincrement())
+  ownerId          Int
+  lens_auth_token  Json?
+  lens_handle      String?  @db.VarChar(255)
+  followNftAddress String?  @db.VarChar(255)
+  profileId        String?  @db.VarChar(255)
+  farcaster        Json?
+  createdAt        DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt        DateTime @db.Timestamptz(6)
+  owners           owners   @relation(fields: [ownerId], references: [id])
+}
+
+model split_contracts {
+  contract_address String   @unique
+  args_hash        String   @unique
+  user_id          Int
+  createdAt        DateTime @default(now()) @db.Timestamptz(6)
+  chain_id         Int
+  args             Json
+  owners           owners   @relation(fields: [user_id], references: [id])
+}
+
+model tasks {
+  id             Int              @id @default(autoincrement())
+  description    String           @db.VarChar(255)
+  campaign       String?          @db.VarChar(255)
+  locked         Boolean?         @default(true)
+  createdAt      DateTime         @default(now()) @db.Timestamptz(6)
+  updatedAt      DateTime         @db.Timestamptz(6)
+  amount         Int              @default(0)
+  name           String           @db.VarChar(255)
+  tag            String?          @db.VarChar(255)
+  groupId        String?          @db.VarChar(255)
+  taskIdInGroup  Int?             @default(0)
+  points_history points_history[]
+}
+
+model templates {
+  id        Int      @id @default(autoincrement())
+  data      Json     @db.Json
+  name      String   @db.VarChar(255)
+  image     String   @db.VarChar(255)
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @db.Timestamptz(6)
+  tags      String[] @default(dbgenerated("(ARRAY[]::character varying[])::character varying(255)[]")) @db.VarChar(255)
+}
+
+model uploadeds {
+  id        Int      @id @default(autoincrement())
+  image     String   @db.VarChar(255)
+  ownerId   Int
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @db.Timestamptz(6)
+  owners    owners   @relation(fields: [ownerId], references: [id])
+}
+
+model user_collected_posts {
+  id      Int    @id @default(autoincrement())
+  address String @db.VarChar(255)
+  postId  String @db.VarChar(255)
+}
+
+model user_funds {
+  id            Int     @id @default(autoincrement())
+  topup         Int     @default(0)
+  wallet        String? @db.VarChar(255)
+  wallet_pvtKey String? @db.VarChar(255)
+  userId        Int     @unique
+  sponsored     Int     @default(0)
+  owners        owners  @relation(fields: [userId], references: [id])
+}
+
+model user_published_canvases {
+  id          Int       @id @default(autoincrement())
+  canvasId    Int?
+  ownerId     Int?
+  platform    String    @db.VarChar(255)
+  createdAt   DateTime  @default(now()) @db.Timestamptz(6)
+  scheduledAt DateTime? @db.Timestamptz(6)
+  txHash      String?   @db.VarChar(255)
+  metadata    Json?     @db.Json
+  xChain      String?   @db.VarChar(255)
+  canvases    canvases? @relation(fields: [canvasId], references: [id], onDelete: Cascade)
+  owners      owners?   @relation(fields: [ownerId], references: [id])
+}
+
+model target_ad_users {
+  id                       Int      @id @default(autoincrement())
+  fid                      Int      @unique
+  total_casts              Int?     @default(0)
+  average_like_per_cast    Int?     @default(0)
+  average_recast_per_cast  Int?     @default(0)
+  followers                Int?     @default(0)
+  createdAt                DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt                DateTime @db.Timestamptz(6)
+  average_replies_per_cast Int?     @default(0)
+}
