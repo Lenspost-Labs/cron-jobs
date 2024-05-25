@@ -307,6 +307,6 @@ model target_ad_users {
   average_recast_per_cast  Int?     @default(0)
   followers                Int?     @default(0)
   createdAt                DateTime @default(now()) @db.Timestamptz(6)
-  updatedAt                DateTime @db.Timestamptz(6)
+  updatedAt                DateTime @db.Timestamptz(6) @updatedAt
   average_replies_per_cast Int?     @default(0)
 }
