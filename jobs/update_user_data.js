@@ -17,7 +17,6 @@ const update_user_data = async () => {
         fid: fids_array[i],
         ...stats,
       });
-      console.log(data_array);
     } catch (error) {
       continue;
     }

@@ -3,10 +3,8 @@ const fs = require("fs");
 const { request, gql } = require("graphql-request");
 const prisma = require("../prisma");
 
-const update_user_data = async () => {
-  let fids = await axios.get("https://api.warpcast.com/v2/power-badge-users");
+const update_user_data_from_airstack = async () => {
 
-  let fids_array = fids.data.result.fids;
   let fids_array_length = fids_array.length;
 
   let data_array = [];
@@ -106,8 +104,7 @@ async function fetch_details_for_fid(fid) {
       );
       allCasts.push(...casts);
       cursor = pageInfo.hasNextPage ? pageInfo.nextCursor : null;
-
-      console.log("Total casts:", totalCasts);
+      
     } while (cursor);
 
     fs.writeFileSync(fileName, JSON.stringify(allCasts, null, 2));
@@ -124,4 +121,4 @@ async function fetch_details_for_fid(fid) {
   }
 }
 
-module.exports = update_user_data;
+module.exports = update_user_data_from_airstack;
