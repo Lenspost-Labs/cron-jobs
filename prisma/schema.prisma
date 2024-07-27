@@ -38,6 +38,8 @@ model canvases {
   assetsRecipientElementData Json[]                    @default([])
   ownerId                    Int
   tags                       String[]                  @default(dbgenerated("(ARRAY[]::character varying[])::character varying(255)[]")) @db.VarChar(255)
+  watermark                  Boolean?                  @default(true)
+  pretext                    Boolean?                  @default(false)
   owners                     owners                    @relation(fields: [ownerId], references: [id])
   shared_canvas              shared_canvas[]
   shared_mint_canvas         shared_mint_canvas[]
@@ -136,7 +138,11 @@ model owners {
   points                  Int                       @default(10)
   farcaster_signer_uuid   String?                   @db.VarChar(255)
   farcaster_id            String?                   @db.VarChar(255)
+  fid                     Int?                      @unique
+  did                     String?                   @unique @db.VarChar(255)
+  blinks                  blinks[]
   canvases                canvases[]
+  contracts               contracts[]
   frames                  frames[]
   nftData                 nftData[]
   points_history          points_history[]
@@ -226,7 +232,7 @@ model socials {
 }
 
 model split_contracts {
-  contract_address String   @unique
+  contract_address String
   args_hash        String   @unique
   user_id          Int
   createdAt        DateTime @default(now()) @db.Timestamptz(6)
@@ -247,6 +253,8 @@ model tasks {
   tag            String?          @db.VarChar(255)
   groupId        String?          @db.VarChar(255)
   taskIdInGroup  Int?             @default(0)
+  isRecurring    Boolean?         @default(false)
+  type           String?          @default("MINT") @db.VarChar(255)
   points_history points_history[]
 }
 
@@ -286,17 +294,18 @@ model user_funds {
 }
 
 model user_published_canvases {
-  id          Int       @id @default(autoincrement())
-  canvasId    Int?
-  ownerId     Int?
-  platform    String    @db.VarChar(255)
-  createdAt   DateTime  @default(now()) @db.Timestamptz(6)
-  scheduledAt DateTime? @db.Timestamptz(6)
-  txHash      String?   @db.VarChar(255)
-  metadata    Json?     @db.Json
-  xChain      String?   @db.VarChar(255)
-  canvases    canvases? @relation(fields: [canvasId], references: [id], onDelete: Cascade)
-  owners      owners?   @relation(fields: [ownerId], references: [id])
+  id                   Int       @id @default(autoincrement())
+  canvasId             Int?
+  ownerId              Int?
+  platform             String    @db.VarChar(255)
+  createdAt            DateTime  @default(now()) @db.Timestamptz(6)
+  scheduledAt          DateTime? @db.Timestamptz(6)
+  txHash               String?   @unique @db.VarChar(255)
+  metadata             Json?     @db.Json
+  xChain               String?   @db.VarChar(255)
+  social_capital_score Float?    @default(0.0)
+  canvases             canvases? @relation(fields: [canvasId], references: [id], onDelete: Cascade)
+  owners               owners?   @relation(fields: [ownerId], references: [id])
 }
 
 model target_ad_users {
@@ -310,4 +319,51 @@ model target_ad_users {
   updatedAt                DateTime @updatedAt @db.Timestamptz(6)
   average_replies_per_cast Int?     @default(0)
   social_capital_score     Float?   @default(0.0)
+}
+
+model channels {
+  id            String   @id
+  name          String   @db.VarChar(255)
+  description   String?  @db.VarChar(255)
+  imageUrl      String?  @db.VarChar(255)
+  createdAt     DateTime @default(now()) @db.Timestamptz(6)
+  followerCount Int?     @default(0)
+  leadFid       Int?
+}
+
+model blinks {
+  id                   Int      @id @default(autoincrement())
+  name                 String   @db.VarChar(255)
+  symbol               String   @db.VarChar(255)
+  content              String   @db.VarChar(255)
+  creators             Json[]   @default([])
+  sellerFeeBasisPoints Int
+  createdAt            DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt            DateTime @db.Timestamptz(6)
+  image                String   @db.VarChar(255)
+  owner                String   @db.VarChar(255)
+  owners               owners   @relation(fields: [owner], references: [solana_address])
+}
+
+model channelCasts {
+  hash            String   @id
+  createdAt       DateTime @default(now()) @db.Timestamptz(6)
+  channelId       String
+  numberOfLikes   Int?     @default(0)
+  numberOfRecasts Int?     @default(0)
+  numberOfReplies Int?     @default(0)
+  text            String?
+  frameUrl        String?
+  castedBy        Int
+}
+
+model contracts {
+  id               String   @id
+  contract_address String
+  contract_type    String
+  chain_id         Int
+  args             Json?
+  user_id          Int
+  created_at       DateTime @default(now()) @db.Timestamptz(6)
+  owners           owners   @relation(fields: [user_id], references: [id])
 }
