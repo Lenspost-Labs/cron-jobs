@@ -1,6 +1,7 @@
 const { PrismaClient } = require("@prisma/client");
 const getAllChannels = require("../functions/getAllChannels");
 const prisma = new PrismaClient();
+const redis = require("../client/redis")
 
 async function update_channels() {
   const channels = await getAllChannels();
@@ -11,11 +12,18 @@ async function update_channels() {
   );
 
   let channelData = [];
+  const date = new Date();
   for (let i = 0; i < filteredChannels.length; i++) {
     filteredChannels[i].description = filteredChannels[i].description.replace(
       "\\u",
       ""
     );
+
+    // 24 hours else continue
+    if (date - new Date(filteredChannels[i].createdAt * 1000) > 86410000) {
+      continue;
+    }
+
     channelData.push({
       name: filteredChannels[i].name,
       description: filteredChannels[i].description.split("\n")[0].slice(0, 255),
@@ -51,6 +59,8 @@ async function update_channels() {
           createdAt: channelData[i].createdAt,
         },
       });
+
+      redis.del("channels");
     } catch (e) {
       console.log(e);
       console.log(channelData[i]);
